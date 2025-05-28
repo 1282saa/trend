@@ -12,8 +12,15 @@ load_dotenv()
 # OpenAI API 키 환경 변수에서 가져오기
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# 기본 클라이언트 초기화
-client = OpenAI(api_key=OPENAI_API_KEY)
+# 기본 클라이언트 초기화 (필요 시에만 생성)
+client = None
+
+def get_client():
+    """OpenAI 클라이언트 가져오기"""
+    global client
+    if client is None and OPENAI_API_KEY:
+        client = OpenAI(api_key=OPENAI_API_KEY)
+    return client
 
 def cluster_topics_with_chatgpt(
     keywords: List[str], 
@@ -64,7 +71,11 @@ def cluster_topics_with_chatgpt(
     
     try:
         # ChatGPT API 호출
-        response = client.chat.completions.create(
+        current_client = get_client()
+        if not current_client:
+            raise ValueError("OpenAI API key not found")
+        
+        response = current_client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
@@ -143,7 +154,11 @@ def generate_hook_copies(
 
     try:
         # ChatGPT API 호출
-        response = client.chat.completions.create(
+        current_client = get_client()
+        if not current_client:
+            raise ValueError("OpenAI API key not found")
+        
+        response = current_client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.8,
@@ -244,7 +259,11 @@ def generate_topic_summary(
 
     try:
         # ChatGPT API 호출
-        response = client.chat.completions.create(
+        current_client = get_client()
+        if not current_client:
+            raise ValueError("OpenAI API key not found")
+        
+        response = current_client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7

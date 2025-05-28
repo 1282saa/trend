@@ -341,16 +341,7 @@ def save_cache():
     with open('results/api_cache.json', 'w', encoding='utf-8') as f:
         json.dump(trends_cache, f, ensure_ascii=False, indent=2)
 
-# 프론트엔드 라우트
-@app.route('/')
-def index():
-    """프론트엔드 메인 페이지"""
-    return send_from_directory('frontend', 'index.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    """정적 파일 서빙"""
-    return send_from_directory('frontend', path)
+# 프론트엔드 라우트는 위에서 이미 정의됨
 
 if __name__ == '__main__':
     # 초기 데이터 로드

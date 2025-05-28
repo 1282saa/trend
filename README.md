@@ -1,145 +1,221 @@
-# 🔥 TrendPulse - 실시간 트렌드 분석 플랫폼
+# 실시간 트렌드 수집기
 
-TrendPulse는 여러 플랫폼(YouTube, 네이버, 연합뉴스 등)에서 실시간 트렌드를 수집하고 AI로 분석하여 인사이트를 제공하는 웹 서비스입니다.
+다양한 소스(유튜브, 뉴스, 포털 사이트, 구글 트렌드)에서 인기 트렌드 데이터를 수집하는 파이썬 도구입니다.
 
-## ✨ 주요 기능
+## 개요
 
-- **다중 플랫폼 트렌드 수집**: YouTube, 네이버, 연합뉴스, Google Trends, Daum 등
-- **실시간 업데이트**: WebSocket을 통한 실시간 데이터 스트리밍
-- **AI 인사이트**: ChatGPT를 활용한 트렌드 분석 및 카피 생성
-- **원본 링크 연결**: 각 트렌드의 원본 콘텐츠로 직접 이동
-- **반응형 디자인**: 모바일/데스크톱 모두 지원
-- **다크모드 지원**: 사용자 선호에 따른 테마 전환
+이 프로젝트는 다음과 같은 데이터를 수집할 수 있습니다:
 
-## 🛠 기술 스택
+1. **유튜브 인기 동영상**: YouTube API를 통한 인기 동영상 목록
+2. **뉴스 인기 기사**: 네이버, 다음, 구글 뉴스의 인기 기사
+3. **포털 인기 검색어**: 네이버, 다음, 줌, 네이트의 실시간 인기 검색어
+4. **구글 트렌드**: 구글 트렌드의 실시간 인기 검색어 및 키워드 분석
 
-### Backend
-- Python 3.8+
-- Flask + Flask-SocketIO
-- aiohttp (비동기 HTTP 요청)
-- OpenAI API (ChatGPT)
+## 설치 방법
 
-### Frontend
-- Vanilla JavaScript
-- Chart.js (데이터 시각화)
-- Socket.io Client
-- CSS3 (Glassmorphism, Animations)
+### 요구사항
 
-## 📦 설치 방법
+- Python 3.7 이상
+- pip (패키지 관리자)
 
-### 1. 저장소 클론
+### 설치 단계
+
+1. 저장소 클론:
+
 ```bash
-git clone https://github.com/yourusername/trendpulse.git
-cd trendpulse
+git clone <repository_url>
+cd <repository_directory>
 ```
 
-### 2. 가상환경 생성 및 활성화
-```bash
-python -m venv venv
+2. 필요한 패키지 설치:
 
-# Windows
-venv\Scripts\activate
-
-# macOS/Linux
-source venv/bin/activate
-```
-
-### 3. 의존성 설치
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. 환경 변수 설정
-`.env.example` 파일을 `.env`로 복사하고 필요한 API 키를 입력합니다:
+3. 환경 변수 설정:
 
 ```bash
 cp .env.example .env
 ```
 
-필요한 API 키:
-- `OPENAI_API_KEY`: OpenAI API 키 (필수)
-- `YOUTUBE_API_KEY`: YouTube Data API v3 키
-- `NAVER_CLIENT_ID`: 네이버 검색 API 클라이언트 ID
-- `NAVER_CLIENT_SECRET`: 네이버 검색 API 시크릿
+`.env` 파일을 편집하여 필요한 API 키를 설정하세요.
 
-## 🚀 실행 방법
+## API 키 발급 방법
+
+### 1. YouTube API 키
+
+1. [Google Cloud Console](https://console.cloud.google.com/)에 로그인
+2. 프로젝트 생성
+3. YouTube Data API v3 활성화
+4. API 키 생성
+5. `.env` 파일의 `YOUTUBE_API_KEY`에 발급받은 키 입력
+
+### 2. 네이버 API 키 (선택 사항)
+
+1. [네이버 개발자 센터](https://developers.naver.com/main/)에 로그인
+2. 애플리케이션 등록
+3. 네이버 검색 API 선택
+4. `.env` 파일에 발급받은 `NAVER_CLIENT_ID`와 `NAVER_CLIENT_SECRET` 입력
+
+## 기본 사용법
+
+### 모든 소스에서 데이터 수집
 
 ```bash
-python api_server.py
+python main.py --all
 ```
 
-웹 브라우저에서 http://localhost:5000 접속
+### 특정 소스에서만 데이터 수집
 
-## 📁 프로젝트 구조
-
-```
-trendpulse/
-├── api_server.py           # 메인 서버 파일
-├── backend/
-│   ├── trend_collector.py  # 통합 트렌드 수집기
-│   ├── collectors/
-│   │   ├── base_collectors.py     # 기본 수집기 클래스
-│   │   └── youtube_collector.py   # YouTube 전용 수집기
-│   └── utils/
-│       └── llm_insights.py        # AI 인사이트 생성
-├── static/
-│   ├── css/
-│   │   └── style.css      # 스타일시트
-│   └── js/
-│       └── app.js         # 프론트엔드 로직
-├── templates/
-│   └── index.html         # 메인 페이지
-├── results/               # 수집 결과 저장 (gitignore)
-├── requirements.txt       # Python 패키지 목록
-├── .env.example          # 환경변수 예시
-└── README.md             # 프로젝트 문서
-
+```bash
+python main.py --youtube --news
 ```
 
-## 🔌 API 엔드포인트
+### 유튜브 카테고리별 데이터 수집
 
-### 트렌드 API
-- `GET /api/keywords/hot` - 인기 키워드 목록 (최대 100개)
-- `GET /api/keywords/history/<keyword>` - 키워드 히스토리
-- `GET /api/keywords/details/<keyword>` - 키워드 상세 정보 및 원본 링크
-- `GET /api/topics` - AI 분석 토픽
-- `GET /api/status` - 시스템 상태
+```bash
+python main.py --youtube --youtube-by-category --youtube-max 100
+```
 
-### WebSocket 이벤트
-- `connect` - 연결 확인
-- `trends_update` - 실시간 트렌드 업데이트
-- `request_update` - 즉시 업데이트 요청
+### 포털 통합 인기 검색어 수집
 
-## 🎨 주요 UI 기능
+```bash
+python main.py --portal --portal-combine --portal-min-sources 2
+```
 
-- **플랫폼 필터**: 특정 플랫폼의 트렌드만 필터링
-- **실시간 티커**: 상단에 인기 키워드 흐름 표시
-- **트렌드 카드**: 각 트렌드의 상세 정보와 차트
-- **원본 보기**: 트렌드의 원본 페이지로 직접 이동
-- **저장 기능**: 관심 트렌드 북마크
-- **다크모드**: 눈의 피로를 줄이는 다크 테마
+### 구글 트렌드 데이터 수집
 
-## 📊 데이터 수집 주기
+```bash
+python main.py --google-trends
+```
 
-- 자동 수집: 5분마다
-- 수동 새로고침: 우측 상단 새로고침 버튼
-- 실시간 업데이트: WebSocket 연결 시
+### 구글 트렌드 키워드 분석
 
-## 🤝 기여 방법
+```bash
+python main.py --google-trends --google-trends-keyword "인공지능,챗GPT" --google-trends-timeframe "today 3-m"
+```
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### 파일로 결과 저장
 
-## 📝 라이선스
+```bash
+python main.py --all --output results/trends --format json --pretty
+```
 
-이 프로젝트는 MIT 라이선스 하에 있습니다.
+### 데몬 모드로 주기적 수집
 
-## 👥 문의
+```bash
+python main.py --all --daemon --interval 600 --runs 10
+```
 
-프로젝트 관련 문의사항은 이슈를 통해 남겨주세요.
+## 명령줄 옵션
 
----
-Made with ❤️ by 서울경제신문
+### 수집 소스 선택
+
+- `--youtube`: 유튜브 인기 동영상 수집
+- `--news`: 뉴스 인기 기사 수집
+- `--portal`: 포털 인기 검색어 수집
+- `--google-trends`: 구글 트렌드 데이터 수집
+- `--all`: 모든 소스에서 데이터 수집 (기본값)
+
+### 유튜브 옵션
+
+- `--youtube-region`: 유튜브 지역 코드 (기본값: KR)
+- `--youtube-max`: 유튜브 최대 결과 수 (기본값: 50)
+- `--youtube-by-category`: 유튜브 카테고리별 수집
+
+### 뉴스 옵션
+
+- `--news-sources`: 수집할 뉴스 소스 (콤마로 구분, 기본값: naver,daum,google)
+- `--news-category`: 뉴스 카테고리 (기본값: 전체)
+- `--news-max`: 소스별 최대 뉴스 수 (기본값: 30)
+
+### 포털 옵션
+
+- `--portal-sources`: 수집할 포털 소스 (콤마로 구분, 기본값: naver,daum,zum,nate)
+- `--portal-max`: 소스별 최대 검색어 수 (기본값: 20)
+- `--portal-combine`: 여러 포털의 인기 검색어 통합 순위화
+- `--portal-min-sources`: 키워드 통합 시 최소 등장 소스 수 (기본값: 2)
+
+### 구글 트렌드 옵션
+
+- `--google-trends-country`: 구글 트렌드 국가 코드 (기본값: south_korea)
+- `--google-trends-max`: 구글 트렌드 최대 결과 수 (기본값: 20)
+- `--google-trends-keyword`: 구글 트렌드에서 분석할 키워드 (콤마로 구분, 최대 5개)
+- `--google-trends-timeframe`: 구글 트렌드 시간 범위 (기본값: now 1-d)
+
+### 출력 옵션
+
+- `--output`: 결과 저장 파일 경로 (없으면 화면에 출력)
+- `--format`: 출력 형식 (json, csv, excel 중 하나, 기본값: json)
+- `--pretty`: JSON 출력을 보기 좋게 포맷팅
+
+### 실행 모드
+
+- `--daemon`: 데몬 모드로 실행 (주기적 수집)
+- `--interval`: 데몬 모드에서 수집 간격(초) (기본값: 300)
+- `--runs`: 데몬 모드에서 실행 횟수 (0=무한)
+
+### 기타 옵션
+
+- `--verbose`: 상세 로깅 활성화
+
+## 프로젝트 구조
+
+```
+project/
+├── collectors/
+│   ├── __init__.py
+│   ├── youtube_collector.py     # 유튜브 인기 동영상 수집
+│   ├── news_collector.py        # 뉴스 인기 기사 수집
+│   ├── portal_collector.py      # 포털 인기 검색어 수집
+│   ├── google_trends_collector.py # 구글 트렌드 데이터 수집
+│   └── trend_collector.py       # 통합 수집기
+├── utils/
+│   ├── __init__.py
+│   ├── cache.py                 # 캐싱 유틸리티
+│   ├── http_client.py           # HTTP 클라이언트
+│   └── browser.py               # 브라우저 자동화 유틸리티
+├── main.py                      # 명령줄 인터페이스
+├── requirements.txt             # 패키지 의존성
+├── .env.example                 # 환경 변수 템플릿
+└── README.md                    # 프로젝트 설명
+```
+
+## 구글 트렌드 기능 사용법
+
+### 실시간 인기 검색어 가져오기
+
+```bash
+python main.py --google-trends
+```
+
+### 여러 국가의 트렌드 비교하기
+
+```bash
+# 미국 트렌드
+python main.py --google-trends --google-trends-country "united_states"
+
+# 일본 트렌드
+python main.py --google-trends --google-trends-country "japan"
+```
+
+### 특정 키워드 분석하기
+
+```bash
+# 최근 하루 동안의 AI와 챗GPT 검색 관심도 비교
+python main.py --google-trends --google-trends-keyword "AI,챗GPT" --google-trends-timeframe "now 1-d"
+
+# 최근 3개월간의 키워드 관심도 트렌드
+python main.py --google-trends --google-trends-keyword "BTS,NewJeans,aespa" --google-trends-timeframe "today 3-m"
+```
+
+### 모든 소스에서 통합 데이터 수집하기
+
+```bash
+python main.py --all --pretty
+```
+
+## 라이선스
+
+MIT License
