@@ -38,13 +38,12 @@ class GoogleTrendsCollector:
         self.tz = int(os.getenv('TIMEZONE', self.tz))
         
         # pytrends 클라이언트 초기화
-        self.pytrends = TrendReq(
-            hl=self.hl, 
-            tz=self.tz,
-            timeout=self.timeout,
-            retries=3,
-            backoff_factor=1.5
-        )
+        try:
+            # 기본 설정으로 초기화 (호환성 문제 방지)
+            self.pytrends = TrendReq(hl=self.hl, tz=self.tz)
+        except Exception as e:
+            logger.warning(f"TrendReq 초기화 오류: {e}, 기본 설정으로 재시도")
+            self.pytrends = TrendReq()
     
     @cached(ttl=1800)  # 30분 캐싱
     def fetch_realtime_trends(self, pn: str = 'south_korea', max_results: int = 20) -> List[Dict[str, Any]]:
