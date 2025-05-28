@@ -16,23 +16,24 @@ from typing import Dict, List, Any, Optional
 import signal
 
 import pandas as pd
-from dotenv import load_dotenv
 
 from collectors.trend_collector import TrendCollector
+from collectors.google_trends_collector import Country, TimeFrame
+from utils.config import initialize_config, get_config
+from utils.error_handler import ErrorHandler, StructuredLogger, handle_errors
 
-# 환경 변수 로드
-load_dotenv()
+# 설정 초기화
+config = initialize_config()
 
-# 로그 설정
-logging.basicConfig(
-    level=logging.INFO if os.getenv('LOG_LEVEL') is None else getattr(logging, os.getenv('LOG_LEVEL')),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('trend_collector.log', encoding='utf-8')
-    ]
-)
-logger = logging.getLogger('main')
+# 로그 디렉토리 생성
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
+
+# 구조화된 로거 설정
+logger = StructuredLogger('main', log_dir=log_dir, level=logging.INFO)
+
+# 오류 처리기 설정
+error_handler = ErrorHandler(log_dir=os.path.join(log_dir, 'errors'))
 
 # 키보드 인터럽트 시 우아하게 종료하기 위한 변수
 stop_requested = False
@@ -117,6 +118,7 @@ def parse_arguments():
     
     return parser.parse_args()
 
+@handle_errors(operation="save_results")
 def save_results(results: Dict[str, Any], output_path: Optional[str], output_format: str, pretty: bool = False):
     """
     결과를 파일로 저장하거나 화면에 출력합니다.
@@ -238,6 +240,7 @@ def flatten_json_to_dataframe(data: Dict[str, Any]) -> pd.DataFrame:
     
     return pd.DataFrame(flattened_data)
 
+@handle_errors(operation="run_collection")
 async def run_collection(args):
     """
     지정된 소스에서 데이터를 수집합니다.
@@ -363,8 +366,15 @@ async def run_collection(args):
         logger.info("구글 트렌드 수집 중...")
         
         # 실시간 인기 검색어 수집
+        country = args.google_trends_country
+        # Country 열거형 문자열 변환
+        try:
+            country = Country[country.upper()]
+        except (KeyError, AttributeError):
+            pass
+            
         google_trends_results = collector.collect_google_trends(
-            country=args.google_trends_country,
+            country=country,
             max_results=args.google_trends_max
         )
         results['sources']['google_trends'] = google_trends_results
@@ -374,9 +384,17 @@ async def run_collection(args):
             keywords = [k.strip() for k in args.google_trends_keyword.split(',') if k.strip()]
             if keywords:
                 logger.info(f"구글 트렌드 키워드 분석: {', '.join(keywords)}")
+                
+                # TimeFrame 열거형 문자열 변환
+                timeframe = args.google_trends_timeframe
+                try:
+                    timeframe = TimeFrame[timeframe.upper().replace('-', '_')]
+                except (KeyError, AttributeError):
+                    pass
+                    
                 keyword_results = collector.collect_keyword_interest(
                     keywords=keywords,
-                    timeframe=args.google_trends_timeframe,
+                    timeframe=timeframe,
                     geo='KR'
                 )
                 results['sources']['google_trends_keyword_analysis'] = keyword_results
@@ -385,6 +403,7 @@ async def run_collection(args):
     
     return results
 
+@handle_errors(operation="run_daemon")
 async def run_daemon(args):
     """
     데몬 모드로 주기적으로 데이터를 수집합니다.
@@ -414,7 +433,7 @@ async def run_daemon(args):
                         ext = f".{args.format}"
                     output_path = f"{base_name}_{timestamp}{ext}"
                 else:
-                    output_dir = os.getenv('OUTPUT_DIR', 'results')
+                    output_dir = config.get('output_dir', 'results')
                     os.makedirs(output_dir, exist_ok=True)
                     output_path = os.path.join(output_dir, f"trends_{timestamp}.{args.format}")
                 
@@ -490,4 +509,4 @@ if __name__ == "__main__":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     
     # 비동기 메인 함수 실행
-    asyncio.run(main()) 
+    asyncio.run(main())

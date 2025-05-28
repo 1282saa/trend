@@ -1,0 +1,43 @@
+# 공통 설정
+common:
+  app:
+    name: TrendPulse
+    version: 1.0.0
+  logging:
+    level: INFO
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    file: logs/app.log
+    console: true
+  cache:
+    memory_ttl: 300  # 5분
+    file_ttl: 3600   # 1시간
+    cleanup_interval: 3600  # 1시간
+  collectors:
+    retry:
+      max_attempts: 3
+      delay: 1.0
+      backoff_factor: 2.0
+
+# 개발 환경 설정
+development:
+  app:
+    debug: true
+  logging:
+    level: DEBUG
+  update_interval: 300  # 5분
+
+# 테스트 환경 설정
+testing:
+  app:
+    debug: true
+  logging:
+    level: DEBUG
+  update_interval: 60  # 1분
+
+# 프로덕션 환경 설정
+production:
+  app:
+    debug: false
+  logging:
+    level: INFO
+  update_interval: 300  # 5분

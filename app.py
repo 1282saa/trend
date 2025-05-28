@@ -16,17 +16,19 @@ from flask_socketio import SocketIO
 from flask_cors import CORS
 
 from collectors.trend_collector import TrendCollector
-from dotenv import load_dotenv
+from utils.config import get_config, initialize_config
+from utils.error_handler import ErrorHandler, StructuredLogger, handle_errors
 
-# 환경 변수 로드
-load_dotenv()
+# 설정 초기화
+config = initialize_config()
 
 # 로깅 설정
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger('trendpulse_server')
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
+logger = StructuredLogger('trendpulse_server', log_dir=log_dir, level=logging.INFO)
+
+# 오류 처리기 설정
+error_handler = ErrorHandler(log_dir=os.path.join(log_dir, 'errors'))
 
 # Flask 앱 및 SocketIO 초기화
 app = Flask(__name__, 
@@ -46,7 +48,7 @@ data_cache = {
 }
 
 # 업데이트 간격 (초)
-UPDATE_INTERVAL = int(os.getenv('UPDATE_INTERVAL', 300))  # 기본 5분
+UPDATE_INTERVAL = config.get('update_interval', 300)  # 기본 5분
 
 @app.route('/')
 def index():
@@ -54,6 +56,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/keywords/hot')
+@handle_errors(operation="get_hot_keywords")
 def get_hot_keywords():
     """인기 키워드 API"""
     if not data_cache['hot_keywords'] or is_cache_expired():
@@ -78,6 +81,7 @@ def get_hot_keywords():
     })
 
 @app.route('/api/topics')
+@handle_errors(operation="get_topics")
 def get_topics():
     """AI 인사이트 토픽 API"""
     if not data_cache['topics'] or is_cache_expired():
@@ -93,6 +97,7 @@ def get_topics():
     })
 
 @app.route('/api/keywords/details/<keyword>')
+@handle_errors(operation="get_keyword_details")
 def get_keyword_details(keyword):
     """특정 키워드에 대한 상세 정보 API"""
     # 실제 구현에서는 데이터베이스나 추가 API 호출로 상세 정보를 가져와야 함
@@ -142,6 +147,7 @@ def get_keyword_details(keyword):
         }), 500
 
 @app.route('/api/keywords/history/<keyword>')
+@handle_errors(operation="get_keyword_history")
 def get_keyword_history(keyword):
     """키워드의 시간별 인기도 이력 API"""
     # 실제 구현에서는 데이터베이스에서 이력 데이터를 가져와야 함
@@ -182,6 +188,7 @@ def is_cache_expired():
     
     return seconds_since_update > UPDATE_INTERVAL
 
+@handle_errors(operation="collect_trends")
 async def collect_trends():
     """모든 소스에서 트렌드 수집"""
     logger.info("트렌드 데이터 수집 시작")
@@ -397,7 +404,7 @@ if __name__ == '__main__':
     
     # 웹 서버 실행
     port = int(os.getenv('PORT', 5000))
-    debug = os.getenv('DEBUG', 'False').lower() == 'true'
+    debug = config.get('app.debug', False)
     
     logger.info(f"TrendPulse 웹 서버 시작 (포트: {port}, 디버그: {debug})")
-    socketio.run(app, host='0.0.0.0', port=port, debug=debug) 
+    socketio.run(app, host='0.0.0.0', port=port, debug=debug)
